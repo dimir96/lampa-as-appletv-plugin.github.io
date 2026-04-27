@@ -2,22 +2,24 @@
 
     var current = null;
 
+    function getId(val) {
+        try {
+            var obj = typeof val === 'string' ? JSON.parse(val) : val;
+            var p = obj.profile;
+            return String(typeof p === 'object' ? p.id : p);
+        } catch (e) { return null; }
+    }
+
+    current = getId(Lampa.Storage.get('account', '{}'));
+
     var _orig = Lampa.Storage.set.bind(Lampa.Storage);
     Lampa.Storage.set = function (key, val) {
         if (key === 'account') {
-            try {
-                var id = String(JSON.parse(val).profile || '');
-                if (current === null) { current = id; }
-                else if (current !== id) { window.location.reload(); }
-            } catch (e) {}
+            var id = getId(val);
+            if (id && current && id !== current) { window.location.reload(); }
+            else { current = id; }
         }
         return _orig(key, val);
     };
-
-    // запомнить текущий профиль при старте
-    try {
-        var init = Lampa.Storage.get('account', '');
-        if (init) current = String(JSON.parse(init).profile || '');
-    } catch (e) {}
 
 })();
