@@ -2,18 +2,22 @@
 
     var current = null;
 
-    function check() {
-        try {
-            var raw = localStorage.getItem('account_user');
-            if (!raw) return;
-            var val = JSON.parse(raw).profile;
-            if (val === undefined) return;
-            var id = String(val);
-            if (current === null) { current = id; return; }
-            if (current !== id) window.location.reload();
-        } catch (e) {}
-    }
+    var _orig = Lampa.Storage.set.bind(Lampa.Storage);
+    Lampa.Storage.set = function (key, val) {
+        if (key === 'account') {
+            try {
+                var id = String(JSON.parse(val).profile || '');
+                if (current === null) { current = id; }
+                else if (current !== id) { window.location.reload(); }
+            } catch (e) {}
+        }
+        return _orig(key, val);
+    };
 
-    setInterval(check, 500);
+    // запомнить текущий профиль при старте
+    try {
+        var init = Lampa.Storage.get('account', '');
+        if (init) current = String(JSON.parse(init).profile || '');
+    } catch (e) {}
 
 })();
