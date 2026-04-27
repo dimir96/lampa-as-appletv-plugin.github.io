@@ -1,33 +1,19 @@
 (function () {
 
-    var currentProfile = null;
+    var current = null;
 
-    function onProfileChange(id) {
-        id = String(id === undefined || id === null ? '' : id);
-        if (currentProfile === null) { currentProfile = id; return; }
-        if (currentProfile !== id) { window.location.reload(); }
+    function check() {
+        try {
+            var raw = localStorage.getItem('account_user');
+            if (!raw) return;
+            var val = JSON.parse(raw).profile;
+            if (val === undefined) return;
+            var id = String(val);
+            if (current === null) { current = id; return; }
+            if (current !== id) window.location.reload();
+        } catch (e) {}
     }
 
-    // 1) profiles.js plugin (levende/lampa-plugins)
-    Lampa.Listener.follow('profile', function (e) {
-        if (e.type === 'changed') onProfileChange(e.profileId);
-    });
-
-    // 2) built-in CUB account change
-    Lampa.Listener.follow('account', function (e) {
-        if (e.type === 'change' || e.type === 'changed') {
-            onProfileChange(e.uid || e.hash || e.id);
-        }
-    });
-
-    // 3) fallback: watch Storage key that profiles.js writes on select
-    var lastStored = null;
-    setInterval(function () {
-        try {
-            var v = String(Lampa.Storage.get('profile_id', '') || '');
-            if (lastStored === null) { lastStored = v; return; }
-            if (lastStored !== v) { window.location.reload(); }
-        } catch (err) {}
-    }, 1000);
+    setInterval(check, 500);
 
 })();
